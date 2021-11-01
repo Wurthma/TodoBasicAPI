@@ -1,8 +1,11 @@
-using System.Collections.Generic;
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TodoBasicAPI.Data;
 using TodoBasicAPI.Models;
+using TodoBasicAPI.ViewModels;
 
 namespace TodoBasicAPI.Controllers
 {
@@ -12,10 +15,59 @@ namespace TodoBasicAPI.Controllers
     {
         [HttpGet]
         [Route("todos")]
-        public List<Todo> Get([FromServices] AppDbContext context)
+        public async Task<IActionResult> GetAsync([FromServices] AppDbContext context)
         {
-            var todos = context.Todos.ToList();
-            return todos;
+            var todos = await context.Todos.AsNoTracking().ToListAsync();
+            return Ok(todos);
+        }
+
+        [HttpPost]
+        [Route("todos")]
+        public async Task<IActionResult> PostAsync([FromServices] AppDbContext context, [FromBody] CreateTodoViewModel createTodoViewModel)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            var todo = new Todo
+            {
+                Title = createTodoViewModel.Title,
+                Done = false,
+                Date = DateTime.Now
+            };
+
+            try
+            {
+                await context.Todos.AddAsync(todo);
+                await context.SaveChangesAsync();
+                return Created($"v1/todos/{todo.Id}", todo);
+            }
+            catch 
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpPut]
+        [Route("todos/{id}")]
+        public async Task<IActionResult> PutAsync([FromServices] AppDbContext context, [FromBody] UpdateTodoViewModel updateTodoViewModel, [FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            try
+            {
+                var todo = await context.Todos.FirstOrDefaultAsync(filter => filter.Id == id);
+                
+                todo.Title = updateTodoViewModel.Title;
+                todo.Done = updateTodoViewModel.Done;
+
+                await context.SaveChangesAsync();
+                return Ok(todo);
+            }
+            catch 
+            {
+                return BadRequest();
+            }
         }
     }
 }

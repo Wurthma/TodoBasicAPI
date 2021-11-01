@@ -21,6 +21,14 @@ namespace TodoBasicAPI.Controllers
             return Ok(todos);
         }
 
+        [HttpGet]
+        [Route("todos/{id}")]
+        public async Task<IActionResult> GetByIdAsync([FromServices] AppDbContext context, [FromRoute] int id)
+        {
+            var todo = await context.Todos.FirstOrDefaultAsync(x => x.Id == id);
+            return Ok(todo);
+        }
+
         [HttpPost]
         [Route("todos")]
         public async Task<IActionResult> PostAsync([FromServices] AppDbContext context, [FromBody] CreateTodoViewModel createTodoViewModel)
@@ -63,6 +71,24 @@ namespace TodoBasicAPI.Controllers
 
                 await context.SaveChangesAsync();
                 return Ok(todo);
+            }
+            catch 
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpDelete]
+        [Route("todos/{id}")]
+        public async Task<IActionResult> DeleteAsync([FromServices] AppDbContext context, [FromRoute] int id)
+        {
+            var todo = await context.Todos.FirstOrDefaultAsync(x => x.Id == id);
+
+            try
+            {
+                context.Todos.Remove(todo);
+                await context.SaveChangesAsync();
+                return Ok("Removido com sucesso!");
             }
             catch 
             {

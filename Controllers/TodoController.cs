@@ -1,6 +1,6 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoBasicAPI.Data;
@@ -15,6 +15,7 @@ namespace TodoBasicAPI.Controllers
     {
         [HttpGet]
         [Route("todos")]
+        [Authorize]
         public async Task<IActionResult> GetAsync([FromServices] AppDbContext context)
         {
             var todos = await context.Todos.AsNoTracking().ToListAsync();
@@ -23,6 +24,7 @@ namespace TodoBasicAPI.Controllers
 
         [HttpGet]
         [Route("todos/{id}")]
+        [Authorize]
         public async Task<IActionResult> GetByIdAsync([FromServices] AppDbContext context, [FromRoute] int id)
         {
             var todo = await context.Todos.FirstOrDefaultAsync(x => x.Id == id);
@@ -31,6 +33,7 @@ namespace TodoBasicAPI.Controllers
 
         [HttpPost]
         [Route("todos")]
+        [Authorize(Roles = "manager")]
         public async Task<IActionResult> PostAsync([FromServices] AppDbContext context, [FromBody] CreateTodoViewModel createTodoViewModel)
         {
             if (!ModelState.IsValid)
@@ -57,6 +60,7 @@ namespace TodoBasicAPI.Controllers
 
         [HttpPut]
         [Route("todos/{id}")]
+        [Authorize(Roles = "manager,employee")]
         public async Task<IActionResult> PutAsync([FromServices] AppDbContext context, [FromBody] UpdateTodoViewModel updateTodoViewModel, [FromRoute] int id)
         {
             if (!ModelState.IsValid)
@@ -80,6 +84,7 @@ namespace TodoBasicAPI.Controllers
 
         [HttpDelete]
         [Route("todos/{id}")]
+        [Authorize(Roles = "manager")]
         public async Task<IActionResult> DeleteAsync([FromServices] AppDbContext context, [FromRoute] int id)
         {
             var todo = await context.Todos.FirstOrDefaultAsync(x => x.Id == id);
